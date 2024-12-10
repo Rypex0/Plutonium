@@ -3,7 +3,7 @@
 ## Universal Fortnite Gameserver
 
 > [!IMPORTANT]  
-> ONLY SINGLEPLAYER.
+> **ONLY SINGLEPLAYER!**
 
 > [!WARNING]  
-> This Is The Beginning Of The Project, So Errors Or Issues May Arise.
+> **This Is The Beginning Of The Project, So Errors Or Issues May Arise.**
