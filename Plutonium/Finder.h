@@ -3,3 +3,5 @@
 #include "SDK.h"
 
 namespace SDK {}
+
+namespace Finder {}

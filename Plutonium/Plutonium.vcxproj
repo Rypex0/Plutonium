@@ -96,6 +96,7 @@
     <ClInclude Include="Memory.h" />
     <ClInclude Include="Functions.h" />
     <ClInclude Include="SDK.h" />
+    <ClInclude Include="Patterns.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

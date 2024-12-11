@@ -31,5 +31,8 @@
     <ClInclude Include="Finder.h">
       <Filter>Private</Filter>
     </ClInclude>
+    <ClInclude Include="Patterns.h">
+      <Filter>Private</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
