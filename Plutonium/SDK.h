@@ -7,6 +7,8 @@
 
 #include "Memory.h"
 
+inline double FortniteVersion = 0.0;
+
 namespace SDK
 {
 	template <class T>
@@ -51,6 +53,110 @@ namespace SDK
 		T* Data;
 		int Count;
 		int Max;
+	};
+
+	struct FString : private TArray<wchar_t>
+	{
+		FString() {};
+
+		FString(const wchar_t* Other)
+		{
+			Max = Count = *Other ? std::wcslen(Other) + 1 : 0;
+
+			if (Count)
+			{
+				Data = const_cast<wchar_t*>(Other);
+			}
+		}
+
+		bool IsValid() const
+		{
+			return Data != nullptr;
+		}
+
+		const wchar_t* c_str() const
+		{
+			return Data;
+		}
+
+		std::string ToString() const
+		{
+			auto Length = std::wcslen(Data);
+
+			std::string STR(Length, '\0');
+
+			std::use_facet<std::ctype<wchar_t>>(std::locale()).narrow(Data, Data + Length, '?', &STR[0]);
+
+			return STR;
+		}
+	};
+
+	struct FName;
+
+	void (*FNameToString)(FName* In, class FString& Out);
+	void(*FreeMemory)(__int64);
+
+	struct FName
+	{
+		uint32_t ComparisonIndex;
+		uint32_t DisplayIndex;
+
+		FName() = default;
+
+		std::string ToString()
+		{
+			FString Temp;
+			FNameToString(this, Temp);
+			std::string Ret(Temp.ToString());
+			FreeMemory(__int64(Temp.c_str()));
+
+			return Ret;
+		}
+	};
+
+	struct UObject;
+
+	FString(*GetObjectFullName)(UObject* In);
+
+	struct UObject
+	{
+		void** VTable;
+		int32_t ObjectFlags;
+		int32_t InternalIndex;
+		UObject* Class;
+		FName Name;
+		UObject* Outer;
+
+		bool IsA(UObject* CMP) const
+		{
+			if (CMP == Class)
+				return false;
+			return false;
+		}
+
+		/*std::string GetName()
+		{
+			return GetObjectFullName(this).ToString();
+		}*/
+
+		std::string GetName()
+		{
+			return Name.ToString();
+		}
+
+		std::string GetFullName()
+		{
+			std::string Temp;
+
+			for (auto outer = Outer; outer; outer = outer->Outer)
+			{
+				Temp = outer->Name.ToString() + "." + Temp;
+			}
+
+			Temp = reinterpret_cast<UObject*>(Class)->Name.ToString() + " " + Temp + this->Name.ToString();
+
+			return Temp;
+		}
 	};
 
 	enum class EFortCustomPartType : uint8_t
