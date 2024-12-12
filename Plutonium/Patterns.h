@@ -4,8 +4,6 @@
 
 namespace Patterns
 {
-	const char* GetEngineVersion = "";
-
 	namespace Athena // Chapter 1
 	{
 		namespace UE_416 // Season 1
