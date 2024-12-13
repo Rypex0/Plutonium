@@ -93,7 +93,7 @@ namespace SDK
 
 	struct FName;
 
-	void (*FNameToString)(FName* In, class FString& Out);
+	void(*FNameToString)(FName* In, class FString& Out);
 	void(*FreeMemory)(__int64);
 
 	struct FName
@@ -117,6 +117,8 @@ namespace SDK
 	struct UObject;
 
 	FString(*GetObjectFullName)(UObject* In);
+
+	void*(*ProcessEvent)(void* Object, void* Function, void* Params);
 
 	struct UObject
 	{
@@ -157,6 +159,110 @@ namespace SDK
 
 			return Temp;
 		}
+
+		uintptr_t GetAddress()
+		{
+			return __int64(this);
+		}
+	};
+
+	struct FGuid
+	{
+		int A;
+		int B;
+		int C;
+		int D;
+	};
+
+	struct UObjectItem
+	{
+		UObject* Object;
+		DWORD Flags;
+		DWORD ClusterIndex;
+		DWORD SerialNumber;
+	};
+
+	struct PreUObjectItem
+	{
+		UObjectItem* FUObject[10];
+	};
+
+	class NewUObjectArray
+	{
+	public:
+		UObjectItem* Objects[9];
+	};
+
+	struct GObjects
+	{
+		NewUObjectArray* ObjectArray;
+		BYTE _padding_0[0xC];
+		uint32_t NumElements;
+
+		inline void NumChunks(int* Start, int* End) const
+		{
+			int cStart = 0, cEnd = 0;
+
+			if (!cEnd)
+			{
+				while (1)
+				{
+					if (ObjectArray->Objects[cStart] == 0)
+					{
+						cStart++;
+					}
+					else
+					{
+						break;
+					}
+				}
+
+				cEnd = cStart;
+				while (1)
+				{
+					if (ObjectArray->Objects[cEnd] == 0)
+					{
+						break;
+					}
+					else
+					{
+						cEnd++;
+					}
+				}
+			}
+
+			*Start = cStart;
+			*End = cEnd;
+		}
+
+		inline int32_t Num() const
+		{
+			return NumElements;
+		}
+
+		inline UObject* GetByIndex(int32_t Index) const
+		{
+			int cStart = 0, cEnd = 0;
+			int ChunkIndex = 0, ChunkSize = 0xFFFF, ChunkPosition;
+			UObjectItem* Object;
+
+			NumChunks(&cStart, &cEnd);
+
+			ChunkIndex = Index / ChunkSize;
+			if (ChunkSize * ChunkIndex != 0 && ChunkSize * ChunkIndex == Index)
+			{
+				ChunkIndex--;
+			}
+
+			ChunkPosition = cStart + ChunkIndex;
+			if (ChunkPosition < cEnd)
+			{
+				Object = ObjectArray->Objects[ChunkPosition] + (Index - ChunkSize * ChunkIndex);
+				return Object->Object;
+			}
+
+			return nullptr;
+		}
 	};
 
 	enum class EFortCustomPartType : uint8_t
@@ -193,3 +299,5 @@ namespace SDK
 		ESpawnActorCollisionHandlingMethod_MAX = 5
 	};
 }
+
+namespace Core {}
