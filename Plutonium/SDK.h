@@ -118,7 +118,7 @@ namespace SDK
 
 	FString(*GetObjectFullName)(UObject* In);
 
-	void*(*ProcessEvent)(void* Object, void* Function, void* Params);
+	void*(*ProcessEventOG)(void* Object, void* Function, void* Params);
 
 	struct UObject
 	{
@@ -129,11 +129,21 @@ namespace SDK
 		FName Name;
 		UObject* Outer;
 
+		uintptr_t GetAddress()
+		{
+			return __int64(this);
+		}
+
 		bool IsA(UObject* CMP) const
 		{
 			if (CMP == Class)
 				return false;
 			return false;
+		}
+
+		void* ProcessEvent(UObject* Function, void* Params = nullptr)
+		{
+			return ProcessEventOG(this, Function, Params);
 		}
 
 		/*std::string GetName()
@@ -158,11 +168,6 @@ namespace SDK
 			Temp = reinterpret_cast<UObject*>(Class)->Name.ToString() + " " + Temp + this->Name.ToString();
 
 			return Temp;
-		}
-
-		uintptr_t GetAddress()
-		{
-			return __int64(this);
 		}
 	};
 
@@ -265,6 +270,74 @@ namespace SDK
 		}
 	};
 
+	class UObjectArray
+	{
+	public:
+		inline int Num() const
+		{
+			return NumElements;
+		}
+
+		inline UObject* GetByIndex(int32_t Index) const
+		{
+			return (&Objects[Index])->Object;
+		}
+	private:
+		UObjectItem* Objects;
+		int MaxElements;
+		int NumElements;
+	};
+
+	struct FVector
+	{
+		float X;
+		float Y;
+		float Z;
+
+		FVector()
+		{
+			X = Y = Z = 0;
+		}
+
+		FVector(float PX, float PY, float PZ)
+		{
+			X = PX;
+			Y = PY;
+			Z = PZ;
+		}
+	};
+
+	template <class TEnum>
+	class TEnumAsByte
+	{
+	public:
+		TEnumAsByte() {}
+
+		TEnumAsByte(TEnum value) : Value(static_cast<uint8_t>(value)) {}
+
+		explicit TEnumAsByte(int32_t value) : Value(static_cast<uint8_t>(value)) {}
+
+		explicit TEnumAsByte(uint8_t value) : Value(value) {}
+
+		operator TEnum() const
+		{
+			return static_cast<TEnum>(Value);
+		}
+
+		TEnum GetValue() const
+		{
+			return static_cast<TEnum>(Value);
+		}
+
+	private:
+		uint8_t Value;
+	};
+
+	namespace Pointer
+	{
+		SDK::UObject* Value;
+	}
+
 	enum class EFortCustomPartType : uint8_t
 	{
 		Head = 0,
@@ -298,6 +371,121 @@ namespace SDK
 		DontSpawnIfColliding = 4,
 		ESpawnActorCollisionHandlingMethod_MAX = 5
 	};
+
+	struct FActorSpawnParameters
+	{
+		SDK::FName Name;
+
+		SDK::UObject* Template;
+
+		SDK::UObject* Owner;
+
+		SDK::UObject* Instigator;
+
+		SDK::UObject* OverrideLevel;
+
+		ESpawnActorCollisionHandlingMethod SpawnCollisionHandlingOverride;
+
+		FActorSpawnParameters() : Name(), Template(nullptr), Owner(nullptr), Instigator(nullptr), OverrideLevel(nullptr), SpawnCollisionHandlingOverride(), bRemoteOwned(0), bNoFail(0), bDeferConstruction(0), bAllowDuringConstructionScript(0), NameMode(), ObjectFlags() {};
+
+	private:
+		uint8_t bRemoteOwned : 1;
+
+	public:
+
+		bool IsRemoteOwned() const { return bRemoteOwned; }
+
+		uint8_t bNoFail : 1;
+
+		uint8_t bDeferConstruction : 1;
+
+		uint8_t bAllowDuringConstructionScript : 1;
+
+		enum class ESpawnActorNameMode : uint8_t
+		{
+			Required_Fatal,
+			Required_ErrorAndReturnNull,
+			Required_ReturnNull,
+			Requested
+		};
+
+		ESpawnActorNameMode NameMode;
+
+		uint8_t ObjectFlags;
+	};
+
+	struct UField_Old : UObject
+	{
+		UField_Old* Next;
+	};
+
+	struct UField_New : UObject
+	{
+		UField_New* Next;
+		void* UKD_0;
+		void* UKD_1;
+	};
+
+	struct UStruct_Old : UField_Old
+	{
+		UStruct_Old* Super;
+		UField_Old* Children;
+		uint32_t Size;
+		char PAD[0x44];
+	};
+
+	struct UStruct_New : UField_New
+	{
+		UStruct_New* Super;
+		UField_New* Children;
+		uint32_t Size;
+		char PAD[0x44];
+	};
+
+	struct FField
+	{
+		void* VTable;
+		void* Class;
+		void* Owner;
+		void* UKD_00;
+		FField* Next;
+		FName Name;
+		int32_t FlagsPrivate;
+	};
+
+	struct FProperty : FField
+	{
+		int32_t ArrayDim;
+		int32_t ElementSize;
+		int32_t PropertyFlags;
+		int32_t RepIndex;
+		void* BlueprintReplicationCondition;
+		int32_t Offset_Internal;
+		FName RepNotifyFunc;
+		FProperty* PropertyLinkNext;
+		FProperty* NextRef;
+		FProperty* DestructorLinkNext;
+		FProperty* PostConstructLinkNext;
+	};
+
+	struct UStruct_New2 : UField_New
+	{
+		UStruct_New2* Super;
+		UField_New* Children;
+		FField* ChildProperties;
+		int32_t Size;
+		int32_t MinAlignment;
+		TArray<uint8_t> Script;
+		FProperty* PropertyLink;
+		FProperty* RefLink;
+		FProperty* DestructorLink;
+		FProperty* PostConstructLink;
+	};
+
+	SDK::UObject*(*GetFirstPlayerController)(SDK::UObject* World);
+	SDK::UObject*(*StaticLoadObjectInternal)(SDK::UObject*, SDK::UObject*, const TCHAR*, const TCHAR*, uint32_t, SDK::UObject*, bool);
+	SDK::UObject*(*StaticConstructObjectInternal)(void*, void*, void*, int, unsigned int, void*, bool, void*, bool);
+	SDK::UObject*(*SpawnActor)(SDK::UObject* World, SDK::UObject* Class, SDK::FVector* Location, SDK::FVector* Rotation, const FActorSpawnParameters& SpawnParameters);
 }
 
 namespace Core {}
